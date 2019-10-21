@@ -25,8 +25,7 @@ import com.lightbend.lagom.scaladsl.api.ServiceCall
 
 import scala.collection._
 
-class BpmRepositoryServiceImpl(bpmDiagramService: BpmDiagramService)
-  extends BpmRepositoryService {
+class BpmRepositoryServiceImpl(bpmDiagramService: BpmDiagramService) extends BpmRepositoryService {
 
   override def storeBpmDiagram: ServiceCall[BpmDiagram, BpmDiagram] = ServiceCall { bpmDiagram =>
     bpmDiagramService.storeBpmDiagram(bpmDiagram)
@@ -48,7 +47,7 @@ class BpmRepositoryServiceImpl(bpmDiagramService: BpmDiagramService)
     bpmDiagramService.activateBpmDiagram(id)
   }
 
-  override def deleteBpmDiagram(id: BpmDiagramId): ServiceCall[NotUsed, Done] =  ServiceCall { _ =>
+  override def deleteBpmDiagram(id: BpmDiagramId): ServiceCall[NotUsed, Done] = ServiceCall { _ =>
     bpmDiagramService.deleteBpmDiagram(id)
   }
 

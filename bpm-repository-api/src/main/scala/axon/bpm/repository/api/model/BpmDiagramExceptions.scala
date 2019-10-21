@@ -58,5 +58,3 @@ object BpmDiagramInDeactivatedState {
     new AnnetteException(MessageCode, Map("id" -> id))
   )
 }
-
-

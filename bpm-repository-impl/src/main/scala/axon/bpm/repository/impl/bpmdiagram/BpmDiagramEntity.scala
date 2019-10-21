@@ -57,7 +57,6 @@ class BpmDiagramEntity extends PersistentEntity {
       }
   }
 
-
   private val initial: Actions = {
     Actions()
       .onCommand[CreateBpmDiagram, BpmDiagram] {
@@ -137,6 +136,5 @@ class BpmDiagramEntity extends PersistentEntity {
       .orElse(processEvent)
       .orElse(getStateCommand)
   }
-
 
 }

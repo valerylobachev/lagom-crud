@@ -53,7 +53,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
   private def createTables() = {
     for {
       index <- elastic.createBpmDiagramIndex
-       create <- session.executeCreateTable("""
+      create <- session.executeCreateTable("""
         CREATE TABLE IF NOT EXISTS bpm_diagrams (
           id text PRIMARY KEY,
           name text,

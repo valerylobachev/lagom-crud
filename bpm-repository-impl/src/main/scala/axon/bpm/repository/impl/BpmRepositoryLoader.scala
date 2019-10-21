@@ -18,7 +18,14 @@ package axon.bpm.repository.impl
 
 import annette.shared.elastic.ElasticProvider
 import axon.bpm.repository.api.BpmRepositoryService
-import axon.bpm.repository.impl.bpmdiagram.{BpmDiagramElastic, BpmDiagramEntity, BpmDiagramEventProcessor, BpmDiagramRepository, BpmDiagramSerializerRegistry, BpmDiagramService}
+import axon.bpm.repository.impl.bpmdiagram.{
+  BpmDiagramElastic,
+  BpmDiagramEntity,
+  BpmDiagramEventProcessor,
+  BpmDiagramRepository,
+  BpmDiagramSerializerRegistry,
+  BpmDiagramService
+}
 import com.lightbend.lagom.scaladsl.api.ServiceLocator
 import com.lightbend.lagom.scaladsl.api.ServiceLocator.NoServiceLocator
 import com.lightbend.lagom.scaladsl.devmode.LagomDevModeComponents

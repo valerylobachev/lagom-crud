@@ -19,7 +19,6 @@ object BpmDiagramCommand {
     JsonSerializer(Json.format[ActivateBpmDiagram]),
     JsonSerializer(emptySingletonFormat(GetBpmDiagram))
   )
-
 }
 
 final case class StoreBpmDiagram(entity: BpmDiagram) extends BpmDiagramCommand with ReplyType[BpmDiagram]
