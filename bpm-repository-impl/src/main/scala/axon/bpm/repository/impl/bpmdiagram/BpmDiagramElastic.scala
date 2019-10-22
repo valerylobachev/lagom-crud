@@ -18,6 +18,7 @@ package axon.bpm.repository.impl.bpmdiagram
 
 import annette.shared.elastic.{BaseEntityElastic, FindResult}
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramId}
+import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.playjson.playJsonIndexable
@@ -29,8 +30,9 @@ import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClient)(implicit override val ec: ExecutionContext)
-    extends BaseEntityElastic(configuration, elasticClient) {
+class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClient, registry: PersistentEntityRegistry)(
+    implicit override val ec: ExecutionContext
+) extends BaseEntityElastic(configuration, elasticClient) {
 
   override val log = LoggerFactory.getLogger(classOf[BpmDiagramElastic])
 
@@ -52,20 +54,25 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
     )
   }
 
-  def indexBpmDiagram(bpmDiagram: BpmDiagram) = {
-    elasticClient.execute {
+  def indexBpmDiagram(bpmDiagram: BpmDiagram): Future[Unit] = {
+    indexEntity(
       indexInto(indexName)
         .id(bpmDiagram.id)
         .doc(BpmDiagramIndex(bpmDiagram))
         .refresh(RefreshPolicy.Immediate)
-    }
+    )
+  }
+
+  def indexBpmDiagram(id: BpmDiagramId): Future[Unit] = {
+    for {
+      maybeEntity <- getEntity(id)
+      res <- maybeEntity.map(indexBpmDiagram).getOrElse(Future.successful(Unit))
+    } yield res
   }
 
   def deleteBpmDiagram(id: BpmDiagramId): Future[Unit] = {
     deleteEntity(id)
   }
-
-  def changeActiveStatus(id: BpmDiagramId): Future[Unit] = ???
 
   def findBpmDiagrams(query: BpmDiagramFindQuery): Future[FindResult] = {
 
@@ -88,6 +95,10 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
       .trackTotalHits(true)
 
     findEntity(searchRequest)
+  }
+
+  private def getEntity(id: BpmDiagramId): Future[Option[BpmDiagram]] = {
+    registry.refFor[BpmDiagramEntity](id).ask(GetBpmDiagram)
   }
 
 }

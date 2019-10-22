@@ -141,7 +141,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
   private def changeActiveStatus(id: BpmDiagramId, updatedAt: OffsetDateTime, active: Boolean) = {
     println(s"changeActiveStatus: ${id}")
     for {
-      _ <- elastic.changeActiveStatus(id)
+      _ <- elastic.indexBpmDiagram(id)
     } yield {
       List(
         updateStatement

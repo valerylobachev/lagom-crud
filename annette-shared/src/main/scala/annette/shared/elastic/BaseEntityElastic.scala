@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 import com.sksamuel.elastic4s.ElasticDsl.{deleteById, indexExists, _}
 import com.sksamuel.elastic4s.requests.delete.DeleteResponse
-import com.sksamuel.elastic4s.requests.indexes.CreateIndexRequest
+import com.sksamuel.elastic4s.requests.indexes.{CreateIndexRequest, IndexRequest}
 import com.sksamuel.elastic4s.requests.indexes.admin.IndexExistsResponse
 import com.sksamuel.elastic4s.requests.searches.{SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess}
@@ -52,6 +52,23 @@ abstract class BaseEntityElastic(configuration: Configuration, elasticClient: El
           createFuture.failed.map(th => log.error("createEntityIndex: failure", th))
           createFuture
       }
+  }
+
+  protected def indexEntity(indexRequest: IndexRequest): Future[Unit] = {
+    val indexFuture = for {
+      res <- elasticClient.execute { indexRequest }
+    } yield {
+      res match {
+        case _: RequestSuccess[_] =>
+          log.debug("indexEntity Success: {}", res.toString)
+        case failure: RequestFailure =>
+          log.error("indexEntity Failure: {}", failure)
+          throw new Exception(failure.error.toString)
+      }
+      ()
+    }
+    indexFuture.failed.map(th => log.error("indexEntity: failure", th))
+    indexFuture
   }
 
   protected def deleteEntity(id: String): Future[Unit] = {

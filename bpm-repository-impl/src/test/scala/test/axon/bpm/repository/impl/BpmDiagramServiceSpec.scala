@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
-class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll with BpmDiagramGenerator {
 
   private val server = ServiceTest.startServer(
     ServiceTest.defaultSetup
@@ -44,7 +44,7 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
   "bpm repository service" should {
 
     "create bpmDiagram & find it by id" in {
-      val diagram = TestData.bpmDiagram()
+      val diagram = generateBpmDiagram()
       for {
         created <- client.createBpmDiagram.invoke(diagram)
         found <- client.getBpmDiagram(diagram.id, readSide = false).invoke()
@@ -55,10 +55,11 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
     }
 
     "create bpmDiagram with existing id" in {
+      val diagram = generateBpmDiagram()
       for {
-        created <- client.createBpmDiagram.invoke(TestData.bpmDiagram("id3"))
+        created <- client.createBpmDiagram.invoke(diagram)
         created2 <- client.createBpmDiagram
-          .invoke(TestData.bpmDiagram("id3"))
+          .invoke(generateBpmDiagram(id = diagram.id))
           .recover {
             case th: Throwable => th
           }

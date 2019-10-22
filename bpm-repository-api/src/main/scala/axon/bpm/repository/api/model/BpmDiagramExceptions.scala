@@ -19,42 +19,48 @@ package axon.bpm.repository.api.model
 import annette.shared.exceptions.{AnnetteException, AnnetteTransportException}
 import com.lightbend.lagom.scaladsl.api.transport.TransportErrorCode
 
+
+
+case class BpmDiagramNotFound(id: String)
+    extends AnnetteTransportException(
+      BpmDiagramNotFound.ErrorCode,
+      new AnnetteException(BpmDiagramNotFound.MessageCode, Map("id" -> id))
+    )
+
 object BpmDiagramNotFound {
   val ErrorCode = TransportErrorCode.NotFound
   val MessageCode = "bpmRepository.bpmDiagram.notFound"
-
-  def apply(id: String) = new AnnetteTransportException(
-    ErrorCode,
-    new AnnetteException(MessageCode, Map("id" -> id))
-  )
 }
+
+case class BpmDiagramAlreadyExist(id: String)
+    extends AnnetteTransportException(
+      BpmDiagramAlreadyExist.ErrorCode,
+      new AnnetteException(BpmDiagramAlreadyExist.MessageCode, Map("id" -> id))
+    )
 
 object BpmDiagramAlreadyExist {
   val ErrorCode = TransportErrorCode.BadRequest
   val MessageCode = "bpmRepository.bpmDiagram.alreadyExist"
-
-  def apply(id: String) = new AnnetteTransportException(
-    ErrorCode,
-    new AnnetteException(MessageCode, Map("id" -> id))
-  )
 }
+
+case class BpmDiagramAlreadyActive(id: String)
+    extends AnnetteTransportException(
+      BpmDiagramAlreadyActive.ErrorCode,
+      new AnnetteException(BpmDiagramAlreadyActive.MessageCode, Map("id" -> id))
+    )
 
 object BpmDiagramAlreadyActive {
   val ErrorCode = TransportErrorCode.BadRequest
   val MessageCode = "bpmRepository.bpmDiagram.alreadyActive"
-
-  def apply(id: String) = new AnnetteTransportException(
-    ErrorCode,
-    new AnnetteException(MessageCode, Map("id" -> id))
-  )
 }
+
+case class BpmDiagramInDeactivatedState(id: String)
+    extends AnnetteTransportException(
+      BpmDiagramInDeactivatedState.ErrorCode,
+      new AnnetteException(BpmDiagramInDeactivatedState.MessageCode, Map("id" -> id))
+    )
 
 object BpmDiagramInDeactivatedState {
   val ErrorCode = TransportErrorCode.BadRequest
   val MessageCode = "bpmRepository.bpmDiagram.inDeactivatedState"
-
-  def apply(id: String) = new AnnetteTransportException(
-    ErrorCode,
-    new AnnetteException(MessageCode, Map("id" -> id))
-  )
 }

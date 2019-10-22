@@ -130,7 +130,7 @@ class BpmDiagramEntity extends PersistentEntity {
       .onCommand[ActivateBpmDiagram, BpmDiagram] {
         case (ActivateBpmDiagram(id), ctx, state) =>
           val newEntity = state.entity.get.copy(active = true, updatedAt = OffsetDateTime.now)
-          ctx.thenPersist(BpmDiagramDeactivated(id, newEntity.updatedAt))(_ => ctx.reply(newEntity))
+          ctx.thenPersist(BpmDiagramActivated(id, newEntity.updatedAt))(_ => ctx.reply(newEntity))
       }
       .orElse(storeCommand)
       .orElse(processEvent)
