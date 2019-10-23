@@ -27,16 +27,16 @@ import scala.collection._
 
 class BpmRepositoryServiceImpl(bpmDiagramService: BpmDiagramService) extends BpmRepositoryService {
 
-  override def storeBpmDiagram: ServiceCall[BpmDiagram, BpmDiagram] = ServiceCall { bpmDiagram =>
-    bpmDiagramService.storeBpmDiagram(bpmDiagram)
+  override def storeBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram] = ServiceCall { entity =>
+    bpmDiagramService.storeBpmDiagram(entity)
   }
 
-  override def createBpmDiagram: ServiceCall[BpmDiagram, BpmDiagram] = ServiceCall { bpmDiagram =>
-    bpmDiagramService.createBpmDiagram(bpmDiagram)
+  override def createBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram] = ServiceCall { entity =>
+    bpmDiagramService.createBpmDiagram(entity)
   }
 
-  override def updateBpmDiagram: ServiceCall[BpmDiagram, BpmDiagram] = ServiceCall { bpmDiagram =>
-    bpmDiagramService.updateBpmDiagram(bpmDiagram)
+  override def updateBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram] = ServiceCall { entity =>
+    bpmDiagramService.updateBpmDiagram(entity)
   }
 
   override def deactivateBpmDiagram(id: BpmDiagramId): ServiceCall[NotUsed, BpmDiagram] = ServiceCall { _ =>

@@ -1,9 +1,10 @@
 package test.axon.bpm.repository.impl
 
-import akka.Done
+import java.time.OffsetDateTime
+
 import annette.shared.exceptions.AnnetteException
-import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramAlreadyExist, BpmDiagramFindQuery, BpmDiagramNotFound}
 import axon.bpm.repository.api.BpmRepositoryService
+import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramNotFound}
 import axon.bpm.repository.impl.BpmRepositoryApplication
 import com.lightbend.lagom.scaladsl.api.AdditionalConfiguration
 import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
@@ -16,8 +17,9 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
 class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll with BpmDiagramGenerator {
+  final val N = 10
 
-  private val server = ServiceTest.startServer(
+  lazy val server = ServiceTest.startServer(
     ServiceTest.defaultSetup
       .withCassandra()
   ) { ctx =>
@@ -32,170 +34,130 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
             "elastic.username" -> "admin",
             "elastic.password" -> "admin",
             "elastic.allowInsecure" -> "true"
-          ))
+          )
+        )
       }
     }
   }
 
-  val client = server.serviceClient.implement[BpmRepositoryService]
+  lazy val client = server.serviceClient.implement[BpmRepositoryService]
+
+  override protected def beforeAll() = server
 
   override protected def afterAll() = server.stop()
 
   "bpm repository service" should {
 
-    "create bpmDiagram & find it by id" in {
-      val diagram = generateBpmDiagram()
+    "getBpmDiagram for existing entity" in {
+      val entity = generateBpmDiagramUpdate()
       for {
-        created <- client.createBpmDiagram.invoke(diagram)
-        found <- client.getBpmDiagram(diagram.id, readSide = false).invoke()
+        created <- client.createBpmDiagram.invoke(entity)
+        found <- client.getBpmDiagram(entity.id, readSide = false).invoke()
       } yield {
-        created shouldBe diagram.copy(updatedAt = created.updatedAt)
-        found shouldBe diagram.copy(updatedAt = created.updatedAt)
+        created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
+        found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
       }
     }
 
-    "create bpmDiagram with existing id" in {
-      val diagram = generateBpmDiagram()
-      for {
-        created <- client.createBpmDiagram.invoke(diagram)
-        created2 <- client.createBpmDiagram
-          .invoke(generateBpmDiagram(id = diagram.id))
-          .recover {
-            case th: Throwable => th
+    "getBpmDiagram for existing entity (read side)" in {
+      val entity = generateBpmDiagramUpdate()
+      (for {
+        created <- client.createBpmDiagram.invoke(entity)
+      } yield {
+        awaitSuccess() {
+          for {
+            found <- client.getBpmDiagram(entity.id, readSide = false).invoke()
+          } yield {
+            created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
+            found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
           }
-      } yield {
-        created shouldBe a[BpmDiagram]
-        created2 shouldBe a[AnnetteException]
-        created2.asInstanceOf[AnnetteException].code shouldBe BpmDiagramAlreadyExist.MessageCode
-      }
+        }
+      }).flatMap(identity)
     }
 
-    "update bpmDiagram" in {
-      val sch = TestData.bpmDiagram("id4", name = "name1", description = "description1").copy(xml = "xml1")
+    "getBpmDiagram for non-existing entity" in {
+      val entity = generateBpmDiagramUpdate()
       for {
-        created <- client.createBpmDiagram.invoke(TestData.bpmDiagram("id4").copy(xml = "xml"))
-        updated <- client.updateBpmDiagram
-          .invoke(sch)
-          .recover { case th: Throwable => th }
-        bpmDiagram <- client.getBpmDiagram("id4", readSide = false).invoke()
-      } yield {
-        created shouldBe a[BpmDiagram]
-        updated shouldBe a[BpmDiagram]
-        bpmDiagram.xml shouldBe sch.xml
-        bpmDiagram.name shouldBe sch.name
-        bpmDiagram.description shouldBe sch.description
-      }
-
-    }
-
-    "update bpmDiagram with non-existing id" in {
-      val sch = TestData.bpmDiagram("id5", name = "name1", description = "description1")
-      for {
-        updated <- client.updateBpmDiagram
-          .invoke(sch)
-          .recover { case th: Throwable => th }
-      } yield {
-        updated shouldBe a[AnnetteException]
-        updated.asInstanceOf[AnnetteException].code shouldBe BpmDiagramNotFound.MessageCode
-      }
-
-    }
-
-    "delete bpmDiagram" in {
-      val id = s"id${Random.nextInt()}"
-      val diagram = TestData.bpmDiagram(id)
-      for {
-        created <- client.createBpmDiagram.invoke(diagram)
-        found1 <- client
-          .getBpmDiagram(id, readSide = false)
-          .invoke()
-          .recover { case th: Throwable => th }
-        deleted <- client.deleteBpmDiagram(id).invoke()
-        found2 <- client
-          .getBpmDiagram(id, readSide = false)
-          .invoke()
-          .recover {
-            case th: Throwable =>
-              th
-          }
-      } yield {
-        created shouldBe a[BpmDiagram]
-        found1 shouldBe diagram.copy(updatedAt = created.updatedAt)
-        deleted shouldBe Done
-        found2 shouldBe a[AnnetteException]
-        found2.asInstanceOf[AnnetteException].code shouldBe BpmDiagramNotFound.MessageCode
-      }
-
-    }
-
-    "delete bpmDiagram with nonexisting id" in {
-      val id = s"id${Random.nextInt()}"
-      for {
-        deleted <- client
-          .deleteBpmDiagram(id)
-          .invoke()
-          .recover { case th: Throwable => th }
-      } yield {
-        deleted shouldBe a[AnnetteException]
-        deleted.asInstanceOf[AnnetteException].code shouldBe BpmDiagramNotFound.MessageCode
-      }
-
-    }
-
-    "find bpmDiagram by non-existing id" in {
-      val diagram = TestData.bpmDiagram()
-      for {
-        found <- client
-          .getBpmDiagram(Random.nextInt().toString, readSide = false)
-          .invoke()
-          .recover { case th: Throwable => th }
+        found <- client.getBpmDiagram(entity.id, readSide = false).invoke().recover { case th: Throwable => th }
       } yield {
         found shouldBe a[AnnetteException]
         found.asInstanceOf[AnnetteException].code shouldBe BpmDiagramNotFound.MessageCode
       }
     }
 
-    "find bpmDiagrams" in {
-      val ids = Seq(
-        s"id-${Random.nextInt()}",
-        s"id-${Random.nextInt()}",
-        s"id-${Random.nextInt()}"
-      )
-      val names = Seq(
-        s"name-${Random.nextInt()}",
-        s"name-${Random.nextInt()}",
-        s"name-${Random.nextInt()}"
-      )
-      val descriptions = Seq(
-        s"description-${Random.nextInt()}",
-        s"description-${Random.nextInt()}",
-        s"description-${Random.nextInt()}"
-      )
-      val bpmDiagrams = for (i <- ids.indices) yield TestData.bpmDiagram(ids(i), names(i), descriptions(i))
+    "getBpmDiagrams" in {
+      val entities = (1 to N).map(_ => generateBpmDiagramUpdate())
+      val now = OffsetDateTime.now
+      val entitiesToBe = entities.map(BpmDiagram(_).copy(updatedAt = now)).toSet
+      for {
+        _ <- Future.traverse(entities)(entity => client.createBpmDiagram.invoke(entity))
+        found <- client.getBpmDiagrams(readSide = false).invoke(entities.map(_.id).toSet)
+      } yield {
+        found.map(_.copy(updatedAt = now)) shouldBe entitiesToBe
+      }
+    }
 
-      val createFuture = Future.traverse(bpmDiagrams)(bpmDiagram => client.createBpmDiagram.invoke(bpmDiagram))
-
+    "getBpmDiagrams (read side)" in {
+      val entities = (1 to N).map(_ => generateBpmDiagramUpdate())
+      val now = OffsetDateTime.now
+      val entitiesToBe = entities.map(BpmDiagram(_).copy(updatedAt = now)).toSet
       (for {
-        _ <- createFuture.recover { case th: Throwable => th }
+        _ <- Future.traverse(entities)(entity => client.createBpmDiagram.invoke(entity))
       } yield {
         awaitSuccess() {
           for {
-            found0 <- client.findBpmDiagrams.invoke(BpmDiagramFindQuery(0, 1000, None))
-            found2 <- client.findBpmDiagrams.invoke(BpmDiagramFindQuery(0, 1000, Some(names(1))))
-            found4 <- client.findBpmDiagrams.invoke(BpmDiagramFindQuery(0, 1000, Some(Random.nextInt().toString)))
+            found <- client.getBpmDiagrams(readSide = false).invoke(entities.map(_.id).toSet)
           } yield {
+            found.map(_.copy(updatedAt = now)) shouldBe entitiesToBe
+          }
+        }
+      }).flatMap(identity)
+    }
 
-            println(s"found0: $found0")
-            println(s"found2: $found2")
-            println(s"found4: $found4")
+    "findBpmDiagrams" in {
+      val searchWord = generateWord(8)
+      val entities1 = (1 to N).map(_ => generateBpmDiagramUpdate()).map(e => e.copy(name = s"${e.name} $searchWord"))
+      val entities2 = (1 to N).map(_ => generateBpmDiagramUpdate())
+      val entitiesToBe = entities1.map(_.id).toSet
+      val query = BpmDiagramFindQuery(0, 1000, Some(searchWord.substring(2, 6)), activeOnly = false)
+      (for {
+        _ <- Future.traverse(entities1 ++ entities2)(entity => client.createBpmDiagram.invoke(entity))
+        _ <- Future.traverse(entities1 ++ entities2) { entity =>
+          if (Random.nextBoolean()) {
+            client.deactivateBpmDiagram(entity.id).invoke()
+          } else {
+            Future.successful()
+          }
+        }
+      } yield {
+        awaitSuccess() {
+          for {
+            found <- client.findBpmDiagrams.invoke(query)
+          } yield {
+            found.total shouldBe entities1.length
+            found.hits.map(_.id).toSet shouldBe entitiesToBe
+          }
+        }
+      }).flatMap(identity)
+    }
 
-            found0.hits.length shouldBe >=(ids.length)
-
-            found2.hits.length shouldBe 1
-            found2.hits.head.id shouldBe ids(1)
-
-            found4.hits.length shouldBe 0
-
+    "findBpmDiagrams active only" in {
+      val searchWord = generateWord(8)
+      val entities1 = (1 to N).map(_ => generateBpmDiagramUpdate()).map(e => e.copy(name = s"${e.name} $searchWord"))
+      val entities2 = (1 to N).map(_ => generateBpmDiagramUpdate()).map(e => e.copy(name = s"${e.name} $searchWord"))
+      val entitiesToBe = entities1.map(_.id).toSet
+      val query = BpmDiagramFindQuery(0, 1000, Some(searchWord.substring(2, 6)))
+      (for {
+        _ <- Future.traverse(entities1 ++ entities2)(entity => client.createBpmDiagram.invoke(entity))
+        _ <- Future.traverse(entities2)(entity => client.deactivateBpmDiagram(entity.id).invoke())
+      } yield {
+        awaitSuccess() {
+          for {
+            found <- client.findBpmDiagrams.invoke(query)
+          } yield {
+            println(found)
+            found.total shouldBe entities1.length
+            found.hits.map(_.id).toSet shouldBe entitiesToBe
           }
         }
       }).flatMap(identity)

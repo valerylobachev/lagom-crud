@@ -1,3 +1,4 @@
+
 package axon.bpm.repository.api.model
 
 import play.api.libs.json.{Format, Json}

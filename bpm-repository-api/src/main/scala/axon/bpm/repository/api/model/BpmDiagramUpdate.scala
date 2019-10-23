@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package axon.bpm.repository.impl.bpmdiagram
+package axon.bpm.repository.api.model
 
-import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramUpdate}
-import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
+import play.api.libs.json.{Format, Json}
 
-object BpmDiagramSerializerRegistry extends JsonSerializerRegistry {
-  override val serializers =
-    BpmDiagramCommand.serializers ++
-      BpmDiagramEvent.serializers ++
-      BpmDiagramState.serializers ++
-      List(
-        JsonSerializer[BpmDiagram],
-        JsonSerializer[BpmDiagramUpdate],
-        JsonSerializer[BpmDiagramFindQuery]
-      )
+case class BpmDiagramUpdate(
+    id: BpmDiagramId,
+    name: String,
+    description: Option[String],
+    notation: String,
+    xml: String,
+)
+
+object BpmDiagramUpdate {
+  implicit val format: Format[BpmDiagramUpdate] = Json.format
 }
+
+
+

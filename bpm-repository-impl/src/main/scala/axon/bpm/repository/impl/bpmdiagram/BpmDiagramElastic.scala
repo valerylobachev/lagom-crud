@@ -23,7 +23,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
 import com.sksamuel.elastic4s.playjson.playJsonIndexable
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
-import com.sksamuel.elastic4s.requests.searches.queries.QueryStringQuery
+import com.sksamuel.elastic4s.requests.searches.queries.{Query, QueryStringQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
 import org.slf4j.LoggerFactory
 import play.api.Configuration
@@ -67,7 +67,7 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
     for {
       maybeEntity <- getEntity(id)
       res <- maybeEntity.map(indexBpmDiagram).getOrElse(Future.successful(Unit))
-    } yield res
+    } yield ()
   }
 
   def deleteBpmDiagram(id: BpmDiagramId): Future[Unit] = {
@@ -75,6 +75,10 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
   }
 
   def findBpmDiagrams(query: BpmDiagramFindQuery): Future[FindResult] = {
+
+    val activeQuery: Seq[Query] =
+      if (query.activeOnly) Seq(termQuery("active", true))
+      else Seq.empty
 
     val nameQuery = query.filter
       .map(filterByName => QueryStringQuery(defaultField = Some("name"), query = s"*$filterByName*"))
@@ -87,7 +91,7 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
       .getOrElse(Seq.empty)
 
     val searchRequest = search(indexName)
-      .bool(must(nameQuery))
+      .bool(must(nameQuery ++ activeQuery))
       .from(query.offset)
       .size(query.size)
       .sourceInclude("updatedAt")

@@ -20,7 +20,7 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import annette.shared.elastic.FindResult
-import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramId, BpmDiagramNotFound}
+import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramId, BpmDiagramNotFound, BpmDiagramUpdate}
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,15 +31,15 @@ class BpmDiagramService(registry: PersistentEntityRegistry, system: ActorSystem,
     mat: Materializer
 ) {
 
-  def storeBpmDiagram(bpmDiagram: BpmDiagram): Future[BpmDiagram] = {
+  def storeBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
     refFor(bpmDiagram.id).ask(StoreBpmDiagram(bpmDiagram))
   }
 
-  def createBpmDiagram(bpmDiagram: BpmDiagram): Future[BpmDiagram] = {
+  def createBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
     refFor(bpmDiagram.id).ask(CreateBpmDiagram(bpmDiagram))
   }
 
-  def updateBpmDiagram(bpmDiagram: BpmDiagram): Future[BpmDiagram] = {
+  def updateBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
     refFor(bpmDiagram.id).ask(UpdateBpmDiagram(bpmDiagram))
   }
 

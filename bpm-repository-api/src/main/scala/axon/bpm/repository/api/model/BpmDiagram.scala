@@ -32,4 +32,12 @@ case class BpmDiagram(
 
 object BpmDiagram {
   implicit val format: Format[BpmDiagram] = Json.format
+
+  def apply(entity: BpmDiagramUpdate): BpmDiagram = new BpmDiagram(
+    id = entity.id,
+    name = entity.name,
+    description = entity.description,
+    notation = entity.notation,
+    xml = entity.xml
+  )
 }

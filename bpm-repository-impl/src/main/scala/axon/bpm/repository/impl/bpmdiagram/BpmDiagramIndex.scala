@@ -31,5 +31,10 @@ case class BpmDiagramIndex(
 object BpmDiagramIndex {
   implicit val format: Format[BpmDiagramIndex] = Json.format
 
-  def apply(entity: BpmDiagram): BpmDiagramIndex = new BpmDiagramIndex(entity.id, entity.name, entity.updatedAt, entity.active)
+  def apply(entity: BpmDiagram): BpmDiagramIndex = new BpmDiagramIndex(
+    id = entity.id,
+    name = entity.name,
+    updatedAt = entity.updatedAt,
+    active = entity.active
+  )
 }

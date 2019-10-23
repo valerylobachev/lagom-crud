@@ -1,28 +1,22 @@
 package test.axon.bpm.repository.impl
 
-import java.time.OffsetDateTime
-
-import axon.bpm.repository.api.model.BpmDiagram
+import axon.bpm.repository.api.model.BpmDiagramUpdate
 import test.annette.shared.RandomGenerator
 
 trait BpmDiagramGenerator extends RandomGenerator{
 
-  def generateBpmDiagram(
+  def generateBpmDiagramUpdate(
       id: String = generateId,
       name: String = generateSentence(),
       description: String = generateText(),
       notation: String = "BPMN",
-      xml: String = "<xml>Some xml data</xml>",
-      updatedAt: OffsetDateTime = OffsetDateTime.now,
-      active: Boolean = true
-  ) = BpmDiagram(
+      xml: String = "<xml>Some xml data</xml>"
+  ) = BpmDiagramUpdate(
     id = id,
     name = name,
     description = Some(description),
     notation = notation,
-    xml = xml,
-    updatedAt = updatedAt,
-    active = active
+    xml = xml
   )
 
 }

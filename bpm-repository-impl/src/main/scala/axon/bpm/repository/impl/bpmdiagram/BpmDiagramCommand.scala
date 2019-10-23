@@ -1,7 +1,7 @@
 package axon.bpm.repository.impl.bpmdiagram
 
 import akka.Done
-import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramId}
+import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramId, BpmDiagramUpdate}
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntity.ReplyType
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializer
 import play.api.libs.json._
@@ -21,9 +21,9 @@ object BpmDiagramCommand {
   )
 }
 
-final case class StoreBpmDiagram(entity: BpmDiagram) extends BpmDiagramCommand with ReplyType[BpmDiagram]
-final case class CreateBpmDiagram(entity: BpmDiagram) extends BpmDiagramCommand with ReplyType[BpmDiagram]
-final case class UpdateBpmDiagram(entity: BpmDiagram) extends BpmDiagramCommand with ReplyType[BpmDiagram]
+final case class StoreBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
+final case class CreateBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
+final case class UpdateBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class DeleteBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[Done]
 final case class DeactivateBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class ActivateBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[BpmDiagram]

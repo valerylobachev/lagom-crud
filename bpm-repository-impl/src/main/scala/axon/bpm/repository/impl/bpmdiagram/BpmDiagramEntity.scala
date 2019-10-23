@@ -38,7 +38,7 @@ class BpmDiagramEntity extends PersistentEntity {
     Actions()
       .onCommand[StoreBpmDiagram, BpmDiagram] {
         case (StoreBpmDiagram(entity), ctx, _) =>
-          val newEntity = entity.copy(updatedAt = OffsetDateTime.now)
+          val newEntity = BpmDiagram(entity)
           ctx.thenPersist(BpmDiagramStored(newEntity))(_ => ctx.reply(newEntity))
       }
   }
@@ -61,7 +61,7 @@ class BpmDiagramEntity extends PersistentEntity {
     Actions()
       .onCommand[CreateBpmDiagram, BpmDiagram] {
         case (CreateBpmDiagram(entity), ctx, _) =>
-          val newEntity = entity.copy(updatedAt = OffsetDateTime.now)
+          val newEntity = BpmDiagram(entity)
           ctx.thenPersist(BpmDiagramCreated(newEntity))(_ => ctx.reply(newEntity))
       }
       .onReadOnlyCommand[UpdateBpmDiagram, BpmDiagram] {
@@ -89,7 +89,7 @@ class BpmDiagramEntity extends PersistentEntity {
       }
       .onCommand[UpdateBpmDiagram, BpmDiagram] {
         case (UpdateBpmDiagram(entity), ctx, _) =>
-          val newEntity = entity.copy(updatedAt = OffsetDateTime.now)
+          val newEntity = BpmDiagram(entity)
           ctx.thenPersist(BpmDiagramUpdated(newEntity))(_ => ctx.reply(newEntity))
       }
       .onCommand[DeleteBpmDiagram, Done] {
