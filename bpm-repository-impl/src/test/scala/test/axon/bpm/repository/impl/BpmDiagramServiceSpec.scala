@@ -16,35 +16,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
-class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll with BpmDiagramGenerator {
+class BpmDiagramServiceSpec extends AbstractBpmRepositorySpec with BpmDiagramGenerator {
   final val N = 10
 
-  lazy val server = ServiceTest.startServer(
-    ServiceTest.defaultSetup
-      .withCassandra()
-  ) { ctx =>
-    new BpmRepositoryApplication(ctx) with LocalServiceLocator {
-      override def additionalConfiguration: AdditionalConfiguration = {
-        super.additionalConfiguration ++ Configuration.from(
-          Map(
-            "cassandra-query-journal.eventual-consistency-delay" -> "0",
-            "lagom.circuit-breaker.default.enabled" -> "off",
-            "elastic.url" -> "https://localhost:9200",
-            "elastic.prefix" -> "test",
-            "elastic.username" -> "admin",
-            "elastic.password" -> "admin",
-            "elastic.allowInsecure" -> "true"
-          )
-        )
-      }
-    }
-  }
-
   lazy val client = server.serviceClient.implement[BpmRepositoryService]
-
-  override protected def beforeAll() = server
-
-  override protected def afterAll() = server.stop()
 
   "bpm repository service" should {
 
@@ -66,7 +41,7 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
       } yield {
         awaitSuccess() {
           for {
-            found <- client.getBpmDiagram(entity.id, readSide = false).invoke()
+            found <- client.getBpmDiagram(entity.id, readSide = true).invoke()
           } yield {
             created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
             found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
@@ -106,7 +81,7 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
       } yield {
         awaitSuccess() {
           for {
-            found <- client.getBpmDiagrams(readSide = false).invoke(entities.map(_.id).toSet)
+            found <- client.getBpmDiagrams(readSide = true).invoke(entities.map(_.id).toSet)
           } yield {
             found.map(_.copy(updatedAt = now)) shouldBe entitiesToBe
           }
@@ -155,7 +130,6 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
           for {
             found <- client.findBpmDiagrams.invoke(query)
           } yield {
-            println(found)
             found.total shouldBe entities1.length
             found.hits.map(_.id).toSet shouldBe entitiesToBe
           }
@@ -163,23 +137,6 @@ class BpmDiagramServiceSpec extends AsyncWordSpec with Matchers with BeforeAndAf
       }).flatMap(identity)
     }
 
-  }
-
-  def awaitSuccess[T](maxDuration: FiniteDuration = 10.seconds, checkEvery: FiniteDuration = 100.milliseconds)(block: => Future[T]): Future[T] = {
-    val checkUntil = System.currentTimeMillis() + maxDuration.toMillis
-
-    def doCheck(): Future[T] = {
-      block.recoverWith {
-        case recheck if checkUntil > System.currentTimeMillis() =>
-          val timeout = Promise[T]()
-          server.application.actorSystem.scheduler.scheduleOnce(checkEvery) {
-            timeout.completeWith(doCheck())
-          }(server.executionContext)
-          timeout.future
-      }
-    }
-
-    doCheck()
   }
 
 }

@@ -59,6 +59,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
           name text,
           description text,
           notation text,
+          xml text,
           updated_at text,
           active boolean
         )
@@ -74,14 +75,15 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
   private def prepareStatements() = {
     for {
       insertStmt <- session.prepare("""
-        | INSERT INTO bpm_diagrams(id, name, description, notation, updated_at, active)
-        |    VALUES (:id, :name, :description, :notation, :updated_at, :active)
+        | INSERT INTO bpm_diagrams(id, name, description, notation, xml, updated_at, active)
+        |    VALUES (:id, :name, :description, :notation, :xml, :updated_at, :active)
       """.stripMargin)
       updateStmt <- session.prepare("""
         | UPDATE bpm_diagrams SET
         |   name = :name,
         |   description = :description,
         |   notation = :notation,
+        |   xml = :xml,
         |   updated_at = :updated_at,
         |   active = :active
         | WHERE id = :id
@@ -114,6 +116,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
           .setString("name", entity.name)
           .setString("description", entity.description.orNull)
           .setString("notation", entity.notation)
+          .setString("xml", entity.xml)
           .setString("updated_at", entity.updatedAt.toString)
           .setBool("active", entity.active)
       )
@@ -132,6 +135,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
           .setString("name", entity.name)
           .setString("description", entity.description.orNull)
           .setString("notation", entity.notation)
+          .setString("xml", entity.xml)
           .setString("updated_at", entity.updatedAt.toString)
           .setBool("active", entity.active)
       )
