@@ -31,8 +31,6 @@ class AnnetteExceptionSerializer extends ExceptionSerializer {
 
   override def serialize(exception: Throwable, accept: Seq[MessageProtocol]): RawExceptionMessage = {
 
-    //println("AnnetteExceptionSerializer: serialize")
-
     val (errorCode, message) = exception match {
 
       case te: TransportException =>

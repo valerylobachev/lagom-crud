@@ -49,7 +49,7 @@ lazy val `bpm-repository-api` = (project in file("bpm-repository-api"))
     )
   )
   .settings(copyrightSettings: _*)
-  .dependsOn(`annette-shared`)
+  .dependsOn(`annette-shared` % "compile->compile;test->test")
 
 lazy val `bpm-repository-impl` = (project in file("bpm-repository-impl"))
   .enablePlugins(LagomScala)
@@ -63,7 +63,7 @@ lazy val `bpm-repository-impl` = (project in file("bpm-repository-impl"))
   .settings(lagomForkedTestSettings: _*)
   .settings(commonSettings: _*)
   .settings(copyrightSettings: _*)
-  .dependsOn(`bpm-repository-api`)
+  .dependsOn(`bpm-repository-api`, `annette-shared` % "compile->compile;test->test")
 
 
 
