@@ -34,7 +34,6 @@ lazy val `annette-shared` = (project in file("annette-shared"))
       lagomScaladslApi,
       lagomScaladslServer % Optional,
       lagomScaladslTestKit,
-      Dependencies.jwt,
       Dependencies.playJsonExt
 
     ) ++ Dependencies.tests ++ Dependencies.elastic
