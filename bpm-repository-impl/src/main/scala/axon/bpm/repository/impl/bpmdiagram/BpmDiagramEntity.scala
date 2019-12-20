@@ -61,8 +61,12 @@ class BpmDiagramEntity extends PersistentEntity {
     Actions()
       .onCommand[CreateBpmDiagram, BpmDiagram] {
         case (CreateBpmDiagram(entity), ctx, _) =>
+          println(s"entity created: ${entity.id}")
           val newEntity = BpmDiagram(entity)
-          ctx.thenPersist(BpmDiagramCreated(newEntity))(_ => ctx.reply(newEntity))
+          ctx.thenPersist(BpmDiagramCreated(newEntity))(_ => {
+            println(s"entity event posted: ${entity.id}")
+            ctx.reply(newEntity)
+          })
       }
       .onReadOnlyCommand[UpdateBpmDiagram, BpmDiagram] {
         case (UpdateBpmDiagram(entity), ctx, _) => ctx.commandFailed(BpmDiagramNotFound(entity.id))

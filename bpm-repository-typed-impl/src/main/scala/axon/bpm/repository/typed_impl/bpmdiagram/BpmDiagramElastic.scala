@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package axon.bpm.repository.impl.bpmdiagram
+package axon.bpm.repository.typed_impl.bpmdiagram
 
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import akka.util.Timeout
 import annette.shared.elastic.{BaseEntityElastic, FindResult}
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramId}
-import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
+import axon.bpm.repository.typed_impl.bpmdiagram.BpmDiagramEntity.{Confirmation, GetBpmDiagram, NotFound, Success}
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.playjson._
 import com.sksamuel.elastic4s.playjson.playJsonIndexable
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import com.sksamuel.elastic4s.requests.searches.queries.{Query, QueryStringQuery}
@@ -29,11 +30,15 @@ import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
 import org.slf4j.LoggerFactory
 import play.api.Configuration
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClient, registry: PersistentEntityRegistry)(
-    implicit override val ec: ExecutionContext
-) extends BaseEntityElastic(configuration, elasticClient) {
+class BpmDiagramElastic(
+    configuration: Configuration,
+    elasticClient: ElasticClient,
+    clusterSharding: ClusterSharding
+)(implicit override val ec: ExecutionContext)
+    extends BaseEntityElastic(configuration, elasticClient) {
 
   override val log = LoggerFactory.getLogger(classOf[BpmDiagramElastic])
 
@@ -103,7 +108,13 @@ class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClie
   }
 
   private def getEntity(id: BpmDiagramId): Future[Option[BpmDiagram]] = {
-    registry.refFor[BpmDiagramEntity](id).ask(GetBpmDiagram)
+    implicit val timeout = Timeout(5.seconds)
+    clusterSharding.entityRefFor(BpmDiagramEntity.typeKey, id)
+      .ask[Confirmation](reply => GetBpmDiagram(id, reply))
+      .map{
+        case Success(entity) => Some(entity)
+        case NotFound    => None
+      }
   }
 
 }

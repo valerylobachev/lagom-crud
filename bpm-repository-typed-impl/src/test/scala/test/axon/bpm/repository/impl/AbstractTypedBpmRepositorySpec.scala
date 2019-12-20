@@ -1,24 +1,21 @@
 package test.axon.bpm.repository.impl
 
 import akka.actor.ActorSystem
-import axon.bpm.repository.impl.BpmRepositoryApplication
-import axon.bpm.repository.impl.bpmdiagram.BpmDiagramSerializerRegistry
+import axon.bpm.repository.typed_impl.BpmRepositoryApplication
+import axon.bpm.repository.typed_impl.bpmdiagram.BpmDiagramSerializerRegistry
 import com.lightbend.lagom.scaladsl.api.AdditionalConfiguration
 import com.lightbend.lagom.scaladsl.playjson.JsonSerializerRegistry
 import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
 import com.lightbend.lagom.scaladsl.testkit.ServiceTest
-import com.typesafe.config.{Config, ConfigFactory}
-import org.scalactic.TypeCheckedTripleEquals
-import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers, WordSpecLike}
-import play.api.Configuration
+import com.typesafe.config.ConfigFactory
+import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 
-import scala.concurrent.{Await, Future, Promise}
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
 
-abstract class AbstractBpmRepositorySpec  extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+abstract class AbstractTypedBpmRepositorySpec  extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
 
   val system = ActorSystem("BpmDiagramEntitySpec", JsonSerializerRegistry.actorSystemSetupFor(BpmDiagramSerializerRegistry))
   implicit val ec = system.dispatcher

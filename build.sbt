@@ -11,7 +11,7 @@ organization in ThisBuild := "biz.lobachev"
 version in ThisBuild := "0.1.0-SNAPSHOT"
 maintainer in ThisBuild := "valery@lobachev.biz"
 
-scalaVersion in ThisBuild := "2.12.9"
+scalaVersion in ThisBuild := "2.13.1"
 
 def commonSettings: Seq[Setting[_]] = Seq(
   unmanagedClasspath in Runtime += baseDirectory.value / "conf",
@@ -26,6 +26,7 @@ lazy val root = (project in file("."))
     `annette-shared`,
     `bpm-repository-api`,
     `bpm-repository-impl`,
+    `bpm-repository-typed-impl`
   )
 
 lazy val `annette-shared` = (project in file("annette-shared"))
@@ -64,6 +65,19 @@ lazy val `bpm-repository-impl` = (project in file("bpm-repository-impl"))
   .settings(copyrightSettings: _*)
   .dependsOn(`bpm-repository-api`, `annette-shared` % "compile->compile;test->test")
 
+lazy val `bpm-repository-typed-impl` = (project in file("bpm-repository-typed-impl"))
+  .enablePlugins(LagomScala)
+  .settings(
+    libraryDependencies ++= Seq(
+      lagomScaladslPersistenceCassandra,
+      lagomScaladslTestKit,
+      Dependencies.macwire
+    ) ++ Dependencies.tests,
+  )
+  .settings(lagomForkedTestSettings: _*)
+  .settings(commonSettings: _*)
+  .settings(copyrightSettings: _*)
+  .dependsOn(`bpm-repository-api`, `annette-shared` % "compile->compile;test->test")
 
 
 lagomCassandraCleanOnStart in ThisBuild := false

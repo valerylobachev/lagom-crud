@@ -5,18 +5,13 @@ import java.time.OffsetDateTime
 import annette.shared.exceptions.AnnetteException
 import axon.bpm.repository.api.BpmRepositoryService
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramNotFound}
-import axon.bpm.repository.impl.BpmRepositoryApplication
-import com.lightbend.lagom.scaladsl.api.AdditionalConfiguration
-import com.lightbend.lagom.scaladsl.server.LocalServiceLocator
-import com.lightbend.lagom.scaladsl.testkit.ServiceTest
-import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 import play.api.Configuration
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
-class BpmDiagramServiceSpec extends AbstractBpmRepositorySpec with BpmDiagramGenerator {
+class TypedBpmDiagramServiceSpec extends AbstractTypedBpmRepositorySpec with BpmDiagramGenerator {
   final val N = 10
 
   lazy val client = server.serviceClient.implement[BpmRepositoryService]
@@ -39,7 +34,7 @@ class BpmDiagramServiceSpec extends AbstractBpmRepositorySpec with BpmDiagramGen
       (for {
         created <- client.createBpmDiagram.invoke(entity)
       } yield {
-        awaitSuccess(13.seconds, 1.second) {
+        awaitSuccess(15.seconds, 1.second) {
           for {
             found <- client.getBpmDiagram(entity.id, readSide = true).invoke()
           } yield {

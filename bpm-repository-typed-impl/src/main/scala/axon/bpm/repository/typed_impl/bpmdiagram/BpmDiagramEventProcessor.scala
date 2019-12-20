@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package axon.bpm.repository.impl.bpmdiagram
+package axon.bpm.repository.typed_impl.bpmdiagram
 
 import java.time.OffsetDateTime
-
 import akka.Done
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramId}
 import com.datastax.driver.core.PreparedStatement
@@ -26,9 +25,9 @@ import com.lightbend.lagom.scaladsl.persistence.cassandra.{CassandraReadSide, Ca
 
 import scala.concurrent.{ExecutionContext, Future}
 
-private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide: CassandraReadSide, elastic: BpmDiagramElastic)(
+private[typed_impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide: CassandraReadSide, elastic: BpmDiagramElastic)(
     implicit ec: ExecutionContext
-) extends ReadSideProcessor[BpmDiagramEvent] {
+) extends ReadSideProcessor[BpmDiagramEntity.Event] {
   private var insertStatement: PreparedStatement = null
   private var updateStatement: PreparedStatement = null
   private var deleteStatement: PreparedStatement = null
@@ -36,19 +35,19 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
 
   def buildHandler = {
     readSide
-      .builder[BpmDiagramEvent]("bpmDiagramEventOffset")
+      .builder[BpmDiagramEntity.Event]("bpmDiagramEventOffset")
       .setGlobalPrepare(createTables)
       .setPrepare(_ => prepareStatements())
-      .setEventHandler[BpmDiagramStored](e => updateEntity(e.event.bpmDiagram))
-      .setEventHandler[BpmDiagramCreated](e => insertEntity(e.event.bpmDiagram))
-      .setEventHandler[BpmDiagramUpdated](e => updateEntity(e.event.bpmDiagram))
-      .setEventHandler[BpmDiagramDeleted](e => deleteEntity(e.event.id))
-      .setEventHandler[BpmDiagramDeactivated](e => changeActiveStatus(e.event.id, e.event.updatedAt, active = false))
-      .setEventHandler[BpmDiagramActivated](e => changeActiveStatus(e.event.id, e.event.updatedAt, active = true))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramStored](e => updateEntity(e.event.bpmDiagram))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramCreated](e => insertEntity(e.event.bpmDiagram))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramUpdated](e => updateEntity(e.event.bpmDiagram))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramDeleted](e => deleteEntity(e.event.id))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramDeactivated](e => changeActiveStatus(e.event.id, e.event.updatedAt, active = false))
+      .setEventHandler[BpmDiagramEntity.BpmDiagramActivated](e => changeActiveStatus(e.event.id, e.event.updatedAt, active = true))
       .build
   }
 
-  def aggregateTags = BpmDiagramEvent.Tag.allTags
+  def aggregateTags = BpmDiagramEntity.Event.Tag.allTags
 
   private def createTables() = {
     println("createTables started")

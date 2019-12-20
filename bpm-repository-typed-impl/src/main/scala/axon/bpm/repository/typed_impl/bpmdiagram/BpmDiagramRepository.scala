@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package axon.bpm.repository.impl.bpmdiagram
+package axon.bpm.repository.typed_impl.bpmdiagram
 
 import java.time.OffsetDateTime
 
@@ -26,7 +26,7 @@ import scala.collection._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
-private[impl] class BpmDiagramRepository(session: CassandraSession)(implicit ec: ExecutionContext) {
+private[typed_impl] class BpmDiagramRepository(session: CassandraSession)(implicit ec: ExecutionContext) {
 
   def getBpmDiagram(id: BpmDiagramId): Future[Option[BpmDiagram]] = {
     for {

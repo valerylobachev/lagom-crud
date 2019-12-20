@@ -10,6 +10,7 @@ import com.sksamuel.elastic4s.requests.searches.{SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess}
 import org.slf4j.Logger
 import play.api.Configuration
+import com.sksamuel.elastic4s.playjson._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,7 +35,7 @@ abstract class BaseEntityElastic(configuration: Configuration, elasticClient: El
       .flatMap {
         case true =>
           log.debug(s"createEntityIndex: Index ${indexName} exists")
-          Future.successful(Unit)
+          Future.successful(())
         case false =>
           log.debug(s"createEntityIndex: Index ${indexName} does not exists")
           val createFuture = for {
