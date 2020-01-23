@@ -6,8 +6,7 @@ object Dependencies {
     val macwire = "2.3.3"
     val scalaTest = "3.0.8"
     val commonsIO = "2.6"
-    val elastic4s = "7.3.1"
-    val elastic4s_lagom = "7.3.1-lagom"
+    val elastic4s = "7.3.5"
     val playJsonExt = "0.40.2"
 
     val akkaPersistenceInmemoryVersion = "2.5.15.2"
@@ -21,12 +20,9 @@ object Dependencies {
   )
 
   val elastic: Seq[sbt.ModuleID] = Seq(
-//    "com.sksamuel.elastic4s" %% "elastic4s-core" % Version.elastic4s,
-//    "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Version.elastic4s,
-//    "com.sksamuel.elastic4s" %% "elastic4s-json-play" % Version.elastic4s,
-    "biz.lobachev.elastic4s" %% "elastic4s-core" % Version.elastic4s_lagom,
-    "biz.lobachev.elastic4s" %% "elastic4s-client-esjava" % Version.elastic4s_lagom,
-    "biz.lobachev.elastic4s" %% "elastic4s-json-play" % Version.elastic4s_lagom,
+    "com.sksamuel.elastic4s" %% "elastic4s-core" % Version.elastic4s,
+    "com.sksamuel.elastic4s" %% "elastic4s-client-esjava" % Version.elastic4s,
+    "com.sksamuel.elastic4s" %% "elastic4s-json-play" % Version.elastic4s,
   )
 
   val playJsonExt: sbt.ModuleID = "ai.x" %% "play-json-extensions" % Version.playJsonExt

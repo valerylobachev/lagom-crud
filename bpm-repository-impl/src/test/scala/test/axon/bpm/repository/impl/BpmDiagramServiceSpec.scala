@@ -39,7 +39,7 @@ class BpmDiagramServiceSpec extends AbstractBpmRepositorySpec with BpmDiagramGen
       (for {
         created <- client.createBpmDiagram.invoke(entity)
       } yield {
-        awaitSuccess(13.seconds, 1.second) {
+        awaitSuccess(30.seconds, 1.second) {
           for {
             found <- client.getBpmDiagram(entity.id, readSide = true).invoke()
           } yield {
