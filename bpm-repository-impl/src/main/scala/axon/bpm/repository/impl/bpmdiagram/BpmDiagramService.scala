@@ -31,7 +31,7 @@ class BpmDiagramService(registry: PersistentEntityRegistry, system: ActorSystem,
     mat: Materializer
 ) {
 
-  def storeBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
+  def storeBpmDiagram(bpmDiagram: BpmDiagram): Future[BpmDiagram] = {
     refFor(bpmDiagram.id).ask(StoreBpmDiagram(bpmDiagram))
   }
 

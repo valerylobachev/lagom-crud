@@ -1,4 +1,5 @@
-package test.axon.bpm.repository.impl
+package test.axon.bpm.repository.typed_impl
+
 
 import akka.actor.ActorSystem
 import axon.bpm.repository.typed_impl.BpmRepositoryApplication
@@ -15,7 +16,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
 
-abstract class AbstractTypedBpmRepositorySpec  extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+abstract class AbstractTypedBpmRepositorySpec  extends AsyncWordSpec with BeforeAndAfterAll with Matchers  {
 
   val system = ActorSystem("BpmDiagramEntitySpec", JsonSerializerRegistry.actorSystemSetupFor(BpmDiagramSerializerRegistry))
   implicit val ec = system.dispatcher
@@ -27,6 +28,10 @@ abstract class AbstractTypedBpmRepositorySpec  extends AsyncWordSpec with Matche
     new BpmRepositoryApplication(ctx) with LocalServiceLocator {
       override def additionalConfiguration: AdditionalConfiguration = {
         super.additionalConfiguration ++ ConfigFactory.parseString(
+//          s"""
+//            |akka.persistence.journal.plugin = "akka.persistence.journal.inmem"
+//            |akka.persistence.snapshot-store.plugin = "akka.persistence.snapshot-store.local"
+//            |akka.persistence.snapshot-store.local.dir = "target/snapshot-${UUID.randomUUID().toString}"
           s"""
             |cassandra-query-journal.events-by-persistence-id-gap-timeout = 1s
             |cassandra-query-journal.refresh-interval = 1s
@@ -53,7 +58,7 @@ abstract class AbstractTypedBpmRepositorySpec  extends AsyncWordSpec with Matche
     server.stop()
   }
 
-  def awaitSuccess[T](maxDuration: FiniteDuration = 10.seconds, checkEvery: FiniteDuration = 500.milliseconds)(block: => Future[T]): Future[T] = {
+  def awaitSuccess[T](maxDuration: FiniteDuration = 30.seconds, checkEvery: FiniteDuration = 1.second)(block: => Future[T]): Future[T] = {
     val checkUntil = System.currentTimeMillis() + maxDuration.toMillis
 
     def doCheck(): Future[T] = {

@@ -28,10 +28,10 @@ import scala.concurrent.{ExecutionContext, Future}
 private[typed_impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide: CassandraReadSide, elastic: BpmDiagramElastic)(
     implicit ec: ExecutionContext
 ) extends ReadSideProcessor[BpmDiagramEntity.Event] {
-  private var insertStatement: PreparedStatement = null
-  private var updateStatement: PreparedStatement = null
-  private var deleteStatement: PreparedStatement = null
-  private var changeActiveStatusStatement: PreparedStatement = null
+  private var insertStatement: PreparedStatement = _
+  private var updateStatement: PreparedStatement = _
+  private var deleteStatement: PreparedStatement = _
+  private var changeActiveStatusStatement: PreparedStatement = _
 
   def buildHandler = {
     readSide
@@ -146,12 +146,11 @@ private[typed_impl] class BpmDiagramEventProcessor(session: CassandraSession, re
   }
 
   private def changeActiveStatus(id: BpmDiagramId, updatedAt: OffsetDateTime, active: Boolean) = {
-    println(s"changeActiveStatus: ${id}")
     for {
       _ <- elastic.indexBpmDiagram(id)
     } yield {
       List(
-        updateStatement
+        changeActiveStatusStatement
           .bind()
           .setString("id", id)
           .setString("updated_at", updatedAt.toString)
@@ -161,7 +160,6 @@ private[typed_impl] class BpmDiagramEventProcessor(session: CassandraSession, re
   }
 
   private def deleteEntity(id: BpmDiagramId) = {
-    println(s"deleteEntity: ${id}")
     for {
       _ <- elastic.deleteBpmDiagram(id)
     } yield {

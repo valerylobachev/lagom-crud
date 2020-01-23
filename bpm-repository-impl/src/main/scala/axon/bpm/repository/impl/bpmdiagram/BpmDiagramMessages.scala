@@ -24,15 +24,13 @@ object BpmDiagramCommand {
   )
 }
 
-final case class StoreBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
+final case class StoreBpmDiagram(entity: BpmDiagram) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class CreateBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class UpdateBpmDiagram(entity: BpmDiagramUpdate) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class DeleteBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[Done]
 final case class DeactivateBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 final case class ActivateBpmDiagram(id: BpmDiagramId) extends BpmDiagramCommand with ReplyType[BpmDiagram]
 case object GetBpmDiagram extends BpmDiagramCommand with ReplyType[Option[BpmDiagram]]
-
-
 
 sealed trait BpmDiagramEvent extends AggregateEvent[BpmDiagramEvent] {
   override def aggregateTag = BpmDiagramEvent.Tag

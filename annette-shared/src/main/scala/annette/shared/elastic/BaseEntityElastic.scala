@@ -4,21 +4,21 @@ import java.time.OffsetDateTime
 
 import com.sksamuel.elastic4s.ElasticDsl.{deleteById, indexExists, _}
 import com.sksamuel.elastic4s.requests.delete.DeleteResponse
-import com.sksamuel.elastic4s.requests.indexes.{CreateIndexRequest, IndexRequest}
 import com.sksamuel.elastic4s.requests.indexes.admin.IndexExistsResponse
+import com.sksamuel.elastic4s.requests.indexes.{CreateIndexRequest, IndexRequest}
 import com.sksamuel.elastic4s.requests.searches.{SearchRequest, SearchResponse}
 import com.sksamuel.elastic4s.{ElasticClient, RequestFailure, RequestSuccess}
+import com.typesafe.config.Config
 import org.slf4j.Logger
-import play.api.Configuration
-import com.sksamuel.elastic4s.playjson._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-abstract class BaseEntityElastic(configuration: Configuration, elasticClient: ElasticClient)(implicit val ec: ExecutionContext) {
+abstract class BaseEntityElastic(config: Config, elasticClient: ElasticClient)(implicit val ec: ExecutionContext) {
 
   protected val log: Logger
 
-  protected val indexPrefix: String = configuration.getOptional[String]("elastic.prefix").map(_ + "-").getOrElse("")
+  protected val indexPrefix: String = Try { config.getString("elastic.prefix") }.toOption.map(_ + "-").getOrElse("")
   def indexSuffix: String
   protected val indexName = s"${indexPrefix}${indexSuffix}"
 

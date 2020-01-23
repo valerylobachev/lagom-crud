@@ -56,7 +56,7 @@ abstract class AbstractBpmRepositorySpec  extends AsyncWordSpec with Matchers wi
     server.stop()
   }
 
-  def awaitSuccess[T](maxDuration: FiniteDuration = 10.seconds, checkEvery: FiniteDuration = 500.milliseconds)(block: => Future[T]): Future[T] = {
+  def awaitSuccess[T](maxDuration: FiniteDuration = 30.seconds, checkEvery: FiniteDuration = 1.second)(block: => Future[T]): Future[T] = {
     val checkUntil = System.currentTimeMillis() + maxDuration.toMillis
 
     def doCheck(): Future[T] = {

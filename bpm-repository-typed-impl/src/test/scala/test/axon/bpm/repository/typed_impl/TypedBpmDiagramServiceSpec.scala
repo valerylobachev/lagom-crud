@@ -1,14 +1,13 @@
-package test.axon.bpm.repository.impl
+package test.axon.bpm.repository.typed_impl
 
 import java.time.OffsetDateTime
 
 import annette.shared.exceptions.AnnetteException
 import axon.bpm.repository.api.BpmRepositoryService
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramNotFound}
-import play.api.Configuration
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
 import scala.util.Random
 
 class TypedBpmDiagramServiceSpec extends AbstractTypedBpmRepositorySpec with BpmDiagramGenerator {
@@ -27,22 +26,6 @@ class TypedBpmDiagramServiceSpec extends AbstractTypedBpmRepositorySpec with Bpm
         created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
         found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
       }
-    }
-
-    "getBpmDiagram for existing entity (read side)" in {
-      val entity = generateBpmDiagramUpdate()
-      (for {
-        created <- client.createBpmDiagram.invoke(entity)
-      } yield {
-        awaitSuccess(15.seconds, 1.second) {
-          for {
-            found <- client.getBpmDiagram(entity.id, readSide = true).invoke()
-          } yield {
-            created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
-            found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
-          }
-        }
-      }).flatMap(identity)
     }
 
     "getBpmDiagram for non-existing entity" in {
@@ -65,6 +48,22 @@ class TypedBpmDiagramServiceSpec extends AbstractTypedBpmRepositorySpec with Bpm
       } yield {
         found.map(_.copy(updatedAt = now)) shouldBe entitiesToBe
       }
+    }
+
+    "getBpmDiagram for existing entity (read side)" in {
+      val entity = generateBpmDiagramUpdate()
+      (for {
+        created <- client.createBpmDiagram.invoke(entity)
+      } yield {
+        awaitSuccess() {
+          for {
+            found <- client.getBpmDiagram(entity.id, readSide = true).invoke()
+          } yield {
+            created shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
+            found shouldBe BpmDiagram(entity).copy(updatedAt = created.updatedAt)
+          }
+        }
+      }).flatMap(identity)
     }
 
     "getBpmDiagrams (read side)" in {
@@ -96,7 +95,7 @@ class TypedBpmDiagramServiceSpec extends AbstractTypedBpmRepositorySpec with Bpm
           if (Random.nextBoolean()) {
             client.deactivateBpmDiagram(entity.id).invoke()
           } else {
-            Future.successful()
+            Future.successful(())
           }
         }
       } yield {

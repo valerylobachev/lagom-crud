@@ -27,6 +27,7 @@ import com.sksamuel.elastic4s.playjson.playJsonIndexable
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import com.sksamuel.elastic4s.requests.searches.queries.{Query, QueryStringQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
+import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
 import play.api.Configuration
 
@@ -34,11 +35,11 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 class BpmDiagramElastic(
-    configuration: Configuration,
+    config: Config,
     elasticClient: ElasticClient,
     clusterSharding: ClusterSharding
 )(implicit override val ec: ExecutionContext)
-    extends BaseEntityElastic(configuration, elasticClient) {
+    extends BaseEntityElastic(config, elasticClient) {
 
   override val log = LoggerFactory.getLogger(classOf[BpmDiagramElastic])
 
@@ -72,7 +73,7 @@ class BpmDiagramElastic(
   def indexBpmDiagram(id: BpmDiagramId): Future[Unit] = {
     for {
       maybeEntity <- getEntity(id)
-      res <- maybeEntity.map(indexBpmDiagram).getOrElse(Future.successful(()))
+      _ <- maybeEntity.map(indexBpmDiagram).getOrElse(Future.successful(()))
     } yield ()
   }
 
@@ -113,7 +114,7 @@ class BpmDiagramElastic(
       .ask[Confirmation](reply => GetBpmDiagram(id, reply))
       .map{
         case Success(entity) => Some(entity)
-        case NotFound    => None
+        case _    => None
       }
   }
 

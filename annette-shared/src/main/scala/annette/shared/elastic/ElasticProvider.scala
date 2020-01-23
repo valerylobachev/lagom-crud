@@ -20,21 +20,24 @@ import java.security.cert.X509Certificate
 
 import com.sksamuel.elastic4s.http.{JavaClient, _}
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
+import com.typesafe.config.Config
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory
+import org.apache.http.conn.ssl.{AllowAllHostnameVerifier, NoopHostnameVerifier, SSLConnectionSocketFactory}
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.apache.http.ssl.{SSLContexts, TrustStrategy}
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback
 import play.api.Configuration
 
+import scala.util.Try
+
 object ElasticProvider {
 
-  def create(configuration: Configuration): ElasticClient = {
-    val url = configuration.getOptional[String]("elastic.url").getOrElse("http://localhost:9200")
-    val maybeUsername = configuration.getOptional[String]("elastic.username")
-    val password = configuration.getOptional[String]("elastic.password").getOrElse("")
-    val allowInsecure = configuration.getOptional[Boolean]("elastic.allowInsecure").getOrElse(false)
+  def create(config: Config): ElasticClient = {
+    val url = Try { config.getString("elastic.url") }.toOption.getOrElse("http://localhost:9200")
+    val maybeUsername = Try { config.getString("elastic.username") }.toOption
+    val password = Try { config.getString("elastic.password") }.toOption.getOrElse("")
+    val allowInsecure = Try { config.getBoolean("elastic.allowInsecure") }.toOption.getOrElse(false)
 
     val maybeProvider = maybeUsername.map { username =>
       val provider = new BasicCredentialsProvider
@@ -62,11 +65,13 @@ object ElasticProvider {
           override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder) = {
             var res = httpClientBuilder
             res = maybeProvider.map(provider => res.setDefaultCredentialsProvider(provider)).getOrElse(res)
-            res = mayBeSslContext.map { sslContext =>
-              res
-                .setSSLContext(sslContext)
-                .setSSLHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-            }.getOrElse(res)
+            res = mayBeSslContext
+              .map { sslContext =>
+                res
+                  .setSSLContext(sslContext)
+                  .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+              }
+              .getOrElse(res)
             res
           }
         }

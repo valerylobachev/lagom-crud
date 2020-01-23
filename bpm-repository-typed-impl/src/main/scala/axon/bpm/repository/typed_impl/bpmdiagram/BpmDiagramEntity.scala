@@ -24,7 +24,6 @@ import akka.cluster.sharding.typed.scaladsl._
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.RetentionCriteria
 import akka.persistence.typed.scaladsl.Effect
-import akka.persistence.typed.scaladsl.Effect.reply
 import akka.persistence.typed.scaladsl.EventSourcedBehavior
 import akka.persistence.typed.scaladsl.ReplyEffect
 import com.lightbend.lagom.scaladsl.persistence.AggregateEvent
@@ -34,19 +33,20 @@ import com.lightbend.lagom.scaladsl.persistence.AggregateEventTagger
 import com.lightbend.lagom.scaladsl.persistence.AkkaTaggerAdapter
 import play.api.libs.json.Format
 import play.api.libs.json._
+
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramId, BpmDiagramUpdate}
 
 object BpmDiagramEntity {
   trait CommandSerializable
 
   sealed trait Command extends CommandSerializable
-  final case class StoreBpmDiagram(entity: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[BpmDiagram]
-  final case class CreateBpmDiagram(entity: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[BpmDiagram]
-  final case class UpdateBpmDiagram(entity: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[BpmDiagram]
-  final case class DeleteBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[Done]
-  final case class DeactivateBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[BpmDiagram]
-  final case class ActivateBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[BpmDiagram]
-  final case class GetBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command // ReplyType[Option[BpmDiagram]]
+  final case class StoreBpmDiagram(entity: BpmDiagram, replyTo: ActorRef[Confirmation]) extends Command
+  final case class CreateBpmDiagram(entity: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]) extends Command
+  final case class UpdateBpmDiagram(entity: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]) extends Command
+  final case class DeleteBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command
+  final case class DeactivateBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command
+  final case class ActivateBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command
+  final case class GetBpmDiagram(id: BpmDiagramId, replyTo: ActorRef[Confirmation]) extends Command
 
   sealed trait Confirmation
   final case class Success(entity: BpmDiagram) extends Confirmation
@@ -63,11 +63,12 @@ object BpmDiagramEntity {
   implicit val confirmationAlreadyActiveFormat: Format[AlreadyActive.type] = Json.format
   implicit val confirmationInDeactivatedStateFormat: Format[InDeactivatedState.type] = Json.format
 
-  implicit val config = JsonConfiguration(discriminator = "confirmationType", typeNaming = JsonNaming { fullName =>
-    fullName.split("\\.").toSeq.last
-  })
-
-  implicit val confirmationFormat: OFormat[Confirmation] = Json.format[Confirmation]
+  implicit val confirmationFormat: OFormat[Confirmation] = {
+    implicit val config = JsonConfiguration(discriminator = "confirmationType", typeNaming = JsonNaming { fullName =>
+      fullName.split("\\.").toSeq.last
+    })
+    Json.format[Confirmation]
+  }
 
   sealed trait Event extends AggregateEvent[Event] {
     override def aggregateTag: AggregateEventTagger[Event] = Event.Tag
@@ -110,82 +111,96 @@ object BpmDiagramEntity {
       .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 100, keepNSnapshots = 2))
 
   implicit val bpmDiagramEntityFormat: Format[BpmDiagramEntity] = Json.format
-
 }
+
 final case class BpmDiagramEntity(maybeEntity: Option[BpmDiagram]) {
   import BpmDiagramEntity._
 
   def applyCommand(cmd: Command): ReplyEffect[Event, BpmDiagramEntity] = {
-    maybeEntity match {
-      case None                           => initial(cmd)
-      case Some(entity) if entity.active  => active((cmd, entity))
-      case Some(entity) if !entity.active => deactivated((cmd, entity))
+    cmd match {
+      case StoreBpmDiagram(e, replyTo)       => onStore(e, replyTo)
+      case CreateBpmDiagram(e, replyTo)      => onCreate(e, replyTo)
+      case UpdateBpmDiagram(e, replyTo)      => onUpdate(e, replyTo)
+      case DeleteBpmDiagram(id, replyTo)     => onDelete(id, replyTo)
+      case ActivateBpmDiagram(id, replyTo)   => onActivate(id, replyTo)
+      case DeactivateBpmDiagram(id, replyTo) => onDeactivate(id, replyTo)
+      case GetBpmDiagram(id, replyTo)        => onGet(id, replyTo)
     }
   }
 
-  def initial: PartialFunction[Command, ReplyEffect[Event, BpmDiagramEntity]] = {
-    case StoreBpmDiagram(e, replyTo) =>
-      val newEntity = BpmDiagram(e)
-      Effect
-        .persist(BpmDiagramStored(newEntity))
-        .thenReply(replyTo)(_ => Success(newEntity))
-    case CreateBpmDiagram(e, replyTo) =>
+  def onStore(e: BpmDiagram, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    Effect
+      .persist(BpmDiagramStored(e))
+      .thenReply(replyTo)(_ => Success(e))
+  }
+
+  def onCreate(e: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isDefined) {
+      Effect.reply(replyTo)(AlreadyExist)
+    } else {
       println(s"entity created: ${e.id}")
       val newEntity = BpmDiagram(e)
       Effect
         .persist(BpmDiagramCreated(newEntity))
         .thenReply(replyTo)(_ => Success(newEntity))
-    case UpdateBpmDiagram(_, replyTo)     => Effect.reply(replyTo)(NotFound)
-    case DeleteBpmDiagram(_, replyTo)     => Effect.reply(replyTo)(NotFound)
-    case DeactivateBpmDiagram(_, replyTo) => Effect.reply(replyTo)(NotFound)
-    case ActivateBpmDiagram(_, replyTo)   => Effect.reply(replyTo)(NotFound)
-    case GetBpmDiagram(_, replyTo)        => Effect.reply(replyTo)(NotFound)
+    }
   }
 
-  def active: PartialFunction[(Command, BpmDiagram), ReplyEffect[Event, BpmDiagramEntity]] = {
-    case (StoreBpmDiagram(e, replyTo), _) =>
+  def onUpdate(e: BpmDiagramUpdate, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isEmpty) {
+      Effect.reply(replyTo)(NotFound)
+    } else if (maybeEntity.get.active) {
       val newEntity = BpmDiagram(e)
       Effect
-        .persist(BpmDiagramStored(newEntity))
+        .persist(BpmDiagramUpdated(newEntity))
         .thenReply(replyTo)(_ => Success(newEntity))
-    case (CreateBpmDiagram(_, replyTo), _) => Effect.reply(replyTo)(AlreadyExist)
-    case (UpdateBpmDiagram(e, replyTo), _) =>
-      val newEntity = BpmDiagram(e)
-      Effect
-        .persist(BpmDiagramStored(newEntity))
-        .thenReply(replyTo)(_ => Success(newEntity))
-    case (DeleteBpmDiagram(id, replyTo), _) =>
+    } else {
+      Effect.reply(replyTo)(InDeactivatedState)
+    }
+  }
+
+  def onDelete(id: BpmDiagramId, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isDefined) {
       Effect
         .persist(BpmDiagramDeleted(id))
         .thenReply(replyTo)(_ => DeleteSuccess)
-    case (DeactivateBpmDiagram(id, replyTo), entity) =>
-      val newEntity = entity.copy(active = false, updatedAt = OffsetDateTime.now)
+    } else {
+      Effect.reply(replyTo)(NotFound)
+    }
+  }
+
+  def onDeactivate(id: BpmDiagramId, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isEmpty) {
+      Effect.reply(replyTo)(NotFound)
+    } else if (maybeEntity.get.active) {
+      val newEntity = maybeEntity.get.copy(active = false, updatedAt = OffsetDateTime.now)
       Effect
         .persist(BpmDiagramDeactivated(id, newEntity.updatedAt))
         .thenReply(replyTo)(_ => Success(newEntity))
-    case (ActivateBpmDiagram(_, replyTo), _) => Effect.reply(replyTo)(AlreadyActive)
-    case (GetBpmDiagram(_, replyTo), entity) => Effect.reply(replyTo)(Success(entity))
+    } else {
+      Effect.reply(replyTo)(InDeactivatedState)
+    }
   }
 
-  def deactivated: PartialFunction[(Command, BpmDiagram), ReplyEffect[Event, BpmDiagramEntity]] = {
-    case (CreateBpmDiagram(_, replyTo), _) => Effect.reply(replyTo)(InDeactivatedState)
-    case (StoreBpmDiagram(e, replyTo), _) =>
-      val newEntity = BpmDiagram(e)
-      Effect
-        .persist(BpmDiagramStored(newEntity))
-        .thenReply(replyTo)(_ => Success(newEntity))
-    case (UpdateBpmDiagram(_, replyTo), _) => Effect.reply(replyTo)(InDeactivatedState)
-    case (DeleteBpmDiagram(id, replyTo), _) =>
-      Effect
-        .persist(BpmDiagramDeleted(id))
-        .thenReply(replyTo)(_ => DeleteSuccess)
-    case (DeactivateBpmDiagram(_, replyTo), _) => Effect.reply(replyTo)(InDeactivatedState)
-    case (ActivateBpmDiagram(id, replyTo), entity) =>
-      val newEntity = entity.copy(active = true, updatedAt = OffsetDateTime.now)
+  def onActivate(id: BpmDiagramId, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isEmpty) {
+      Effect.reply(replyTo)(NotFound)
+    } else if (maybeEntity.get.active) {
+      Effect.reply(replyTo)(AlreadyActive)
+    } else {
+      val newEntity = maybeEntity.get.copy(active = true, updatedAt = OffsetDateTime.now)
       Effect
         .persist(BpmDiagramActivated(id, newEntity.updatedAt))
         .thenReply(replyTo)(_ => Success(newEntity))
-    case (GetBpmDiagram(_, replyTo), entity) => Effect.reply(replyTo)(Success(entity))
+    }
+  }
+
+  def onGet(id: BpmDiagramId, replyTo: ActorRef[Confirmation]): ReplyEffect[Event, BpmDiagramEntity] = {
+    if (maybeEntity.isDefined) {
+      Effect.reply(replyTo)(Success(maybeEntity.get))
+    } else {
+      Effect.reply(replyTo)(NotFound)
+    }
   }
 
   def applyEvent(evt: Event): BpmDiagramEntity = {

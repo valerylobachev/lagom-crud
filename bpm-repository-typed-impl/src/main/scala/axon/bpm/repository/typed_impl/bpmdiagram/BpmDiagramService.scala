@@ -24,9 +24,17 @@ import akka.stream.Materializer
 import scala.concurrent.duration._
 import akka.util.Timeout
 import annette.shared.elastic.FindResult
-import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramId, BpmDiagramNotFound, BpmDiagramUpdate}
+import axon.bpm.repository.api.model.{
+  BpmDiagram,
+  BpmDiagramAlreadyActive,
+  BpmDiagramAlreadyExist,
+  BpmDiagramFindQuery,
+  BpmDiagramId,
+  BpmDiagramInDeactivatedState,
+  BpmDiagramNotFound,
+  BpmDiagramUpdate
+}
 import axon.bpm.repository.typed_impl.bpmdiagram.BpmDiagramEntity._
-import com.lightbend.lagom.scaladsl.api.transport.BadRequest
 import com.lightbend.lagom.scaladsl.persistence.PersistentEntityRegistry
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,40 +57,44 @@ class BpmDiagramService(
     clusterSharding.entityRefFor(BpmDiagramEntity.typeKey, id)
   }
 
-  private def confirmationToResult(confirmation: Confirmation): BpmDiagram =
+  private def confirmationToResult(id: BpmDiagramId, confirmation: Confirmation): BpmDiagram =
     confirmation match {
-      case Success(entity) => entity
-      case NotFound        => throw BadRequest("not found")
+      case Success(entity)    => entity
+      case NotFound           => throw BpmDiagramNotFound(id)
+      case AlreadyActive      => throw BpmDiagramAlreadyActive(id)
+      case AlreadyExist       => throw BpmDiagramAlreadyExist(id)
+      case InDeactivatedState => throw BpmDiagramInDeactivatedState(id)
+      case _                  => throw new RuntimeException("Match fail")
     }
 
-  def storeBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
+  def storeBpmDiagram(bpmDiagram: BpmDiagram): Future[BpmDiagram] = {
     refFor(bpmDiagram.id)
       .ask[Confirmation](reply => StoreBpmDiagram(bpmDiagram, reply))
-      .map(res => confirmationToResult(res))
+      .map(res => confirmationToResult(bpmDiagram.id, res))
   }
 
   def createBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
     refFor(bpmDiagram.id)
       .ask[Confirmation](reply => CreateBpmDiagram(bpmDiagram, reply))
-      .map(res => confirmationToResult(res))
+      .map(res => confirmationToResult(bpmDiagram.id, res))
   }
 
   def updateBpmDiagram(bpmDiagram: BpmDiagramUpdate): Future[BpmDiagram] = {
     refFor(bpmDiagram.id)
       .ask[Confirmation](reply => UpdateBpmDiagram(bpmDiagram, reply))
-      .map(res => confirmationToResult(res))
+      .map(res => confirmationToResult(bpmDiagram.id, res))
   }
 
   def deactivateBpmDiagram(id: BpmDiagramId): Future[BpmDiagram] = {
     refFor(id)
       .ask[Confirmation](reply => DeactivateBpmDiagram(id, reply))
-      .map(res => confirmationToResult(res))
+      .map(res => confirmationToResult(id, res))
   }
 
   def activateBpmDiagram(id: BpmDiagramId): Future[BpmDiagram] = {
     refFor(id)
       .ask[Confirmation](reply => ActivateBpmDiagram(id, reply))
-      .map(res => confirmationToResult(res))
+      .map(res => confirmationToResult(id, res))
   }
 
   def deleteBpmDiagram(id: BpmDiagramId): Future[Done] = {
@@ -90,7 +102,8 @@ class BpmDiagramService(
       .ask[Confirmation](reply => DeleteBpmDiagram(id, reply))
       .map {
         case DeleteSuccess => Done
-        case NotFound      => throw BadRequest("not found")
+        case NotFound      => throw BpmDiagramNotFound(id)
+        case _             => throw new RuntimeException("Match fail")
       }
   }
 
@@ -99,12 +112,7 @@ class BpmDiagramService(
       maybeBpmDiagram <- if (readSide) {
         repository.getBpmDiagram(id)
       } else {
-        refFor(id)
-          .ask[Confirmation](reply => GetBpmDiagram(id, reply))
-          .map {
-            case Success(entity) => Some(entity)
-            case _               => None
-          }
+        getBpmDiagram(id)
       }
     } yield {
       maybeBpmDiagram match {
@@ -119,17 +127,18 @@ class BpmDiagramService(
       repository.getBpmDiagrams(ids)
     } else {
       Future
-        .traverse(ids)(
-          id =>
-            refFor(id)
-              .ask[Confirmation](reply => GetBpmDiagram(id, reply))
-              .map {
-                case Success(entity) => Some(entity)
-                case _               => None
-              }
-        )
+        .traverse(ids)(getBpmDiagram)
         .map(seq => seq.flatten)
     }
+  }
+
+  private def getBpmDiagram(id: BpmDiagramId) = {
+    refFor(id)
+      .ask[Confirmation](reply => GetBpmDiagram(id, reply))
+      .map {
+        case Success(entity) => Some(entity)
+        case _               => None
+      }
   }
 
   def findBpmDiagrams(query: BpmDiagramFindQuery): Future[FindResult] = {

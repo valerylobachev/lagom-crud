@@ -26,14 +26,14 @@ import com.sksamuel.elastic4s.playjson.playJsonIndexable
 import com.sksamuel.elastic4s.requests.common.RefreshPolicy
 import com.sksamuel.elastic4s.requests.searches.queries.{Query, QueryStringQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, SortOrder}
+import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
-import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BpmDiagramElastic(configuration: Configuration, elasticClient: ElasticClient, registry: PersistentEntityRegistry)(
+class BpmDiagramElastic(config: Config, elasticClient: ElasticClient, registry: PersistentEntityRegistry)(
     implicit override val ec: ExecutionContext
-) extends BaseEntityElastic(configuration, elasticClient) {
+) extends BaseEntityElastic(config, elasticClient) {
 
   override val log = LoggerFactory.getLogger(classOf[BpmDiagramElastic])
 

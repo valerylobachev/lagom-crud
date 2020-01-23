@@ -1,4 +1,4 @@
-package test.axon.bpm.repository.impl
+package test.axon.bpm.repository.typed_impl
 
 import java.time.OffsetDateTime
 

@@ -18,10 +18,13 @@ package axon.bpm.repository.typed_impl.bpmdiagram
 
 import axon.bpm.repository.api.model.{BpmDiagram, BpmDiagramFindQuery, BpmDiagramUpdate}
 import com.lightbend.lagom.scaladsl.playjson.{JsonSerializer, JsonSerializerRegistry}
+import play.api.libs.json.Json
+
+import scala.collection._
 
 object BpmDiagramSerializerRegistry extends JsonSerializerRegistry {
   import BpmDiagramEntity._
-  override val serializers = Seq(
+  override val serializers = immutable.Seq(
         // events
         JsonSerializer[BpmDiagramStored],
         JsonSerializer[BpmDiagramCreated],

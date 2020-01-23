@@ -27,7 +27,7 @@ import scala.collection._
 
 trait BpmRepositoryService extends Service {
 
-  def storeBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram]
+  def storeBpmDiagram: ServiceCall[BpmDiagram, BpmDiagram]
   def createBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram]
   def updateBpmDiagram: ServiceCall[BpmDiagramUpdate, BpmDiagram]
   def deleteBpmDiagram(id: BpmDiagramId): ServiceCall[NotUsed, Done]

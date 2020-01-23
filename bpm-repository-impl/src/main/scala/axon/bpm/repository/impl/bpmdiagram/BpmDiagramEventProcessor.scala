@@ -152,7 +152,7 @@ private[impl] class BpmDiagramEventProcessor(session: CassandraSession, readSide
       _ <- elastic.indexBpmDiagram(id)
     } yield {
       List(
-        updateStatement
+        changeActiveStatusStatement
           .bind()
           .setString("id", id)
           .setString("updated_at", updatedAt.toString)

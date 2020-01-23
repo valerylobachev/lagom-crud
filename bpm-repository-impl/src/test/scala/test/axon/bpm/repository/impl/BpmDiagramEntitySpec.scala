@@ -24,11 +24,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
 
     "handle StoreBpmDiagram" in {
       val id = generateId
-      val entity = generateBpmDiagramUpdate(id = id)
+      val entity = generateBpmDiagram(id = id)
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
       val outcome = driver.run(StoreBpmDiagram(entity))
-      val entityToBe = BpmDiagram(entity)
-        .copy(updatedAt = outcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = entity
       outcome.events should ===(List(BpmDiagramStored(entityToBe)))
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(entityToBe))
@@ -100,12 +99,11 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle StoreBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
-      val entity = generateBpmDiagramUpdate(id = id)
+      val entity = generateBpmDiagram(id = id)
       val outcome = driver.run(StoreBpmDiagram(entity))
-      val entityToBe = BpmDiagram(entity)
-        .copy(updatedAt = outcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = entity
       outcome.events should ===(List(BpmDiagramStored(entityToBe)))
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(entityToBe))
@@ -115,12 +113,11 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle CreateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val entity = generateBpmDiagramUpdate(id = id)
       val outcome = driver.run(CreateBpmDiagram(entity))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(updatedAt = storeOutcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = storeEntity
       outcome.replies.head should be(BpmDiagramAlreadyExist(id))
       outcome.events.size should ===(0)
       outcome.state.entity should ===(Some(entityToBe))
@@ -129,7 +126,7 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle UpdateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val entity = generateBpmDiagramUpdate(id = id)
       val outcome = driver.run(UpdateBpmDiagram(entity))
@@ -144,7 +141,7 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle DeleteBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val outcome = driver.run(DeleteBpmDiagram(id))
       outcome.events should ===(List(BpmDiagramDeleted(id)))
@@ -156,10 +153,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle DeactivateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val outcome = driver.run(DeactivateBpmDiagram(id))
-      val entityToBe = BpmDiagram(storeEntity)
+      val entityToBe = storeEntity
         .copy(updatedAt = outcome.replies.head.asInstanceOf[BpmDiagram].updatedAt, active = false)
       outcome.events should ===(List(BpmDiagramDeactivated(id, entityToBe.updatedAt)))
       outcome.state.entity should ===(Some(entityToBe))
@@ -170,11 +167,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle ActivateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val outcome = driver.run(ActivateBpmDiagram(id))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(updatedAt = storeOutcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = storeEntity
       outcome.replies.head should be(BpmDiagramAlreadyActive(id))
       outcome.events.size should ===(0)
       outcome.state.entity should ===(Some(entityToBe))
@@ -183,11 +179,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle GetBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity))
       val outcome = driver.run(GetBpmDiagram)
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(updatedAt = storeOutcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = storeEntity
       outcome.events should ===(Nil)
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(Some(entityToBe)))
@@ -200,11 +195,11 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle StoreBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
-      val entity = generateBpmDiagramUpdate(id = id)
+      val entity = generateBpmDiagram(id = id)
       val outcome = driver.run(StoreBpmDiagram(entity))
-      val entityToBe = BpmDiagram(entity).copy(updatedAt = outcome.replies.head.asInstanceOf[BpmDiagram].updatedAt)
+      val entityToBe = entity
       outcome.events should ===(List(BpmDiagramStored(entityToBe)))
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(entityToBe))
@@ -214,15 +209,11 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle CreateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val entity = generateBpmDiagramUpdate(id = id)
       val outcome = driver.run(CreateBpmDiagram(entity))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(
-          updatedAt = storeOutcome.replies.last.asInstanceOf[BpmDiagram].updatedAt,
-          active = false
-        )
+      val entityToBe = storeEntity.copy(active = false)
       outcome.replies.head should be(BpmDiagramInDeactivatedState(id))
       outcome.events.size should ===(0)
       outcome.state.entity should ===(Some(entityToBe))
@@ -231,15 +222,11 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle UpdateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val entity = generateBpmDiagramUpdate(id = id)
       val outcome = driver.run(UpdateBpmDiagram(entity))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(
-          updatedAt = storeOutcome.replies.last.asInstanceOf[BpmDiagram].updatedAt,
-          active = false
-        )
+      val entityToBe = storeEntity.copy(active = false)
       outcome.replies.head should be(BpmDiagramInDeactivatedState(id))
       outcome.events.size should ===(0)
       outcome.state.entity should ===(Some(entityToBe))
@@ -248,7 +235,7 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle DeleteBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val outcome = driver.run(DeleteBpmDiagram(id))
       outcome.events should ===(List(BpmDiagramDeleted(id)))
@@ -260,14 +247,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle DeactivateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val outcome = driver.run(DeactivateBpmDiagram(id))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(
-          updatedAt = storeOutcome.replies.last.asInstanceOf[BpmDiagram].updatedAt,
-          active = false
-        )
+      val entityToBe = storeEntity.copy(active = false)
       outcome.replies.head should be(BpmDiagramInDeactivatedState(id))
       outcome.events.size should ===(0)
       outcome.state.entity should ===(Some(entityToBe))
@@ -276,14 +259,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle ActivateBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val outcome = driver.run(ActivateBpmDiagram(id))
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(
-          updatedAt = outcome.replies.head.asInstanceOf[BpmDiagram].updatedAt,
-          active = true
-        )
+      val entityToBe = storeEntity.copy(active = true)
       outcome.events should ===(List(BpmDiagramActivated(id, entityToBe.updatedAt)))
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(entityToBe))
@@ -293,14 +272,10 @@ class BpmDiagramEntitySpec extends WordSpecLike with Matchers with BeforeAndAfte
     "handle GetBpmDiagram" in {
       val id = generateId
       val driver = new PersistentEntityTestDriver(system, new BpmDiagramEntity, id)
-      val storeEntity = generateBpmDiagramUpdate(id = id)
+      val storeEntity = generateBpmDiagram(id = id)
       val storeOutcome = driver.run(StoreBpmDiagram(storeEntity), DeactivateBpmDiagram(id))
       val outcome = driver.run(GetBpmDiagram)
-      val entityToBe = BpmDiagram(storeEntity)
-        .copy(
-          updatedAt = storeOutcome.replies.last.asInstanceOf[BpmDiagram].updatedAt,
-          active = false
-        )
+      val entityToBe = storeEntity.copy(active = false)
       outcome.events should ===(Nil)
       outcome.state.entity should ===(Some(entityToBe))
       outcome.replies should ===(List(Some(entityToBe)))

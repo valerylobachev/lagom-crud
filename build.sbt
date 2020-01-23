@@ -13,6 +13,9 @@ maintainer in ThisBuild := "valery@lobachev.biz"
 
 scalaVersion in ThisBuild := "2.13.1"
 
+ThisBuild / scalacOptions ++= List("-encoding", "utf8", "-deprecation", "-feature", "-unchecked", "-Xfatal-warnings")
+
+
 def commonSettings: Seq[Setting[_]] = Seq(
   unmanagedClasspath in Runtime += baseDirectory.value / "conf",
   mappings in Universal ++= directory(baseDirectory.value / "conf"),

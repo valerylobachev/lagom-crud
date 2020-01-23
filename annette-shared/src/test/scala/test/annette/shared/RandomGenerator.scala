@@ -23,7 +23,7 @@ trait RandomGenerator {
 
   def generateSentence(wordCount: Int = 7, wordLength: Int = 7): String = {
     val str = generateString(wordCount, wordLength).toLowerCase
-    str.charAt(0).toUpper + str.substring(1)
+    s"${str.charAt(0).toUpper}${str.substring(1)}"
   }
 
   def generateText(sentenceCount: Int = 5, wordCount: Int = 7, wordLength: Int = 7) = {

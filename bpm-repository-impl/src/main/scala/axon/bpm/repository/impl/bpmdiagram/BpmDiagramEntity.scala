@@ -38,10 +38,10 @@ class BpmDiagramEntity extends PersistentEntity {
     Actions()
       .onCommand[StoreBpmDiagram, BpmDiagram] {
         case (StoreBpmDiagram(entity), ctx, _) =>
-          val newEntity = BpmDiagram(entity)
-          ctx.thenPersist(BpmDiagramStored(newEntity))(_ => ctx.reply(newEntity))
+          ctx.thenPersist(BpmDiagramStored(entity))(_ => ctx.reply(entity))
       }
   }
+
 
   private val getStateCommand: Actions = {
     Actions()

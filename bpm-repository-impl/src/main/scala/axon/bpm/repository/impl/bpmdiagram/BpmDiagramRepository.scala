@@ -23,7 +23,8 @@ import com.datastax.driver.core.Row
 import com.lightbend.lagom.scaladsl.persistence.cassandra.CassandraSession
 
 import scala.collection._
-import scala.collection.JavaConverters._
+//import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 private[impl] class BpmDiagramRepository(session: CassandraSession)(implicit ec: ExecutionContext) {

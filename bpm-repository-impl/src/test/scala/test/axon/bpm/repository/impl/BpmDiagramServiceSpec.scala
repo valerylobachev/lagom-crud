@@ -101,7 +101,7 @@ class BpmDiagramServiceSpec extends AbstractBpmRepositorySpec with BpmDiagramGen
           if (Random.nextBoolean()) {
             client.deactivateBpmDiagram(entity.id).invoke()
           } else {
-            Future.successful()
+            Future.successful(())
           }
         }
       } yield {
